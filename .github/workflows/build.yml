@@ -4,6 +4,9 @@ name: Build AE Plugin
 # click "Run workflow". It needs the Adobe After Effects SDK, supplied either
 # as a release tagged `sdk` (drag-and-drop the SDK .zip there) or via the
 # AESDK_URL secret. See docs/auto-build.md for click-by-click instructions.
+#
+# Adobe packages the SDK as a .tar.zstd inside a nested .zip inside the outer
+# .zip (AfterEffectsSDK_*_mac.zip). Both macOS and Windows steps handle this.
 
 on:
   workflow_dispatch:
@@ -24,30 +27,56 @@ jobs:
           AESDK_URL: ${{ secrets.AESDK_URL }}
         run: |
           set -e
-          mkdir -p sdk
           if [ -n "$AESDK_URL" ]; then
             echo "Downloading SDK from AESDK_URL secret"
-            curl -fL "$AESDK_URL" -o sdk.zip
+            curl -fL "$AESDK_URL" -o sdk_download.zip
           else
             echo "Downloading SDK from the 'sdk' release"
             if ! gh release download sdk --repo "$GITHUB_REPOSITORY" --dir . --pattern '*.zip' --clobber; then
               echo "::error::AE SDK not found. Upload the SDK .zip to a release tagged 'sdk', or set the AESDK_URL secret. See docs/auto-build.md."
               exit 1
             fi
-            mv "$(ls *.zip | head -n1)" sdk.zip
+            mv "$(ls *.zip | head -n1)" sdk_download.zip
           fi
-          unzip -q sdk.zip -d sdk
+
+          # Unzip the outer wrapper
+          unzip -q sdk_download.zip -d sdk_tmp
+
+          # Adobe (SDK 25.x+) packages the real SDK as:
+          #   outer.zip -> *.tar.zstd.zip -> *.tar.zstd -> (tar) -> SDK folder
+          INNER_ZIP=$(find sdk_tmp -maxdepth 3 -name '*.tar.zstd.zip' | head -n1)
+          if [ -n "$INNER_ZIP" ]; then
+            echo "Detected Adobe zstd-packaged SDK: $INNER_ZIP"
+            unzip -q "$INNER_ZIP" -d sdk_mid
+            TAR_ZSTD=$(find sdk_mid -name '*.tar.zstd' | head -n1)
+            if [ -z "$TAR_ZSTD" ]; then
+              echo "::error::Expected .tar.zstd inside $INNER_ZIP but none found."; exit 1
+            fi
+            # Prefer the bundled zstd binary; fall back to brew
+            ZSTD_BIN=$(find sdk_tmp -maxdepth 3 -name 'zstd' -type f | head -n1)
+            if [ -n "$ZSTD_BIN" ]; then
+              chmod +x "$ZSTD_BIN"
+            elif command -v zstd >/dev/null 2>&1; then
+              ZSTD_BIN=zstd
+            else
+              brew install zstd
+              ZSTD_BIN=zstd
+            fi
+            mkdir -p sdk
+            "$ZSTD_BIN" -d "$TAR_ZSTD" --stdout | tar -xC sdk
+          else
+            # Standard layout: the outer zip IS the SDK
+            mv sdk_tmp sdk
+          fi
 
       - name: Locate SDK root
         id: sdk
         run: |
-          echo "=== SDK zip top-level structure ==="
-          find "$PWD/sdk" -maxdepth 4 | head -60
+          echo "=== SDK structure (first 60 entries) ==="
+          find "$PWD/sdk" -maxdepth 5 | head -60
           HDR=$(find "$PWD/sdk" -type f -name AE_Effect.h | head -n1)
           if [ -z "$HDR" ]; then echo "::error::AE_Effect.h not found inside the SDK zip."; exit 1; fi
           HDR_DIR=$(dirname "$HDR")
-          # If AE_Effect.h lives directly in a Headers/ dir, ROOT is its parent.
-          # Otherwise treat the containing dir as ROOT itself.
           if [ "$(basename "$HDR_DIR")" = "Headers" ]; then
             ROOT=$(dirname "$HDR_DIR")
           else
@@ -89,10 +118,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           AESDK_URL: ${{ secrets.AESDK_URL }}
         run: |
-          New-Item -ItemType Directory -Force -Path sdk | Out-Null
           if ($env:AESDK_URL) {
             Write-Host "Downloading SDK from AESDK_URL secret"
-            curl.exe -fL $env:AESDK_URL -o sdk.zip
+            curl.exe -fL $env:AESDK_URL -o sdk_download.zip
           } else {
             Write-Host "Downloading SDK from the 'sdk' release"
             gh release download sdk --repo $env:GITHUB_REPOSITORY --dir . --pattern *.zip --clobber
@@ -100,16 +128,41 @@ jobs:
               Write-Error "AE SDK not found. Upload the SDK .zip to a release tagged 'sdk', or set the AESDK_URL secret. See docs/auto-build.md."
               exit 1
             }
-            Get-ChildItem *.zip | Select-Object -First 1 | Rename-Item -NewName sdk.zip
+            Get-ChildItem *.zip | Select-Object -First 1 | Rename-Item -NewName sdk_download.zip
           }
-          Expand-Archive -Path sdk.zip -DestinationPath sdk -Force
+
+          Expand-Archive -Path sdk_download.zip -DestinationPath sdk_tmp -Force
+
+          # Handle Adobe's zstd-wrapped SDK (SDK 25.x+)
+          $innerZip = Get-ChildItem -Path sdk_tmp -Recurse -Filter '*.tar.zstd.zip' | Select-Object -First 1
+          if ($innerZip) {
+            Write-Host "Detected Adobe zstd-packaged SDK: $($innerZip.FullName)"
+            Expand-Archive -Path $innerZip.FullName -DestinationPath sdk_mid -Force
+            $tarZstd = Get-ChildItem -Path sdk_mid -Recurse -Filter '*.tar.zstd' | Select-Object -First 1
+            if (-not $tarZstd) {
+              Write-Error "Expected .tar.zstd inside the SDK package but found none."; exit 1
+            }
+            # Install zstd if not present
+            $zstdExe = (Get-Command zstd -ErrorAction SilentlyContinue)
+            if (-not $zstdExe) {
+              choco install zstandard -y --no-progress 2>&1 | Out-Null
+              $zstdExe = "C:\ProgramData\chocolatey\bin\zstd.exe"
+            } else {
+              $zstdExe = $zstdExe.Source
+            }
+            New-Item -ItemType Directory -Force -Path sdk | Out-Null
+            & $zstdExe -d $tarZstd.FullName -o sdk_raw.tar
+            tar -xf sdk_raw.tar -C sdk
+          } else {
+            Rename-Item sdk_tmp sdk
+          }
 
       - name: Locate SDK root
         id: sdk
         shell: pwsh
         run: |
-          Write-Host "=== SDK zip top-level structure ==="
-          Get-ChildItem -Path sdk -Recurse -Depth 4 | Select-Object -First 60 | ForEach-Object { $_.FullName }
+          Write-Host "=== SDK structure (first 60 entries) ==="
+          Get-ChildItem -Path sdk -Recurse -Depth 5 | Select-Object -First 60 | ForEach-Object { $_.FullName }
           $hdr = Get-ChildItem -Path sdk -Recurse -Filter AE_Effect.h | Select-Object -First 1
           if (-not $hdr) { Write-Error "AE_Effect.h not found inside the SDK zip."; exit 1 }
           $hdrDir = Split-Path $hdr.FullName
