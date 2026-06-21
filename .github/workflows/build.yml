@@ -42,18 +42,14 @@ jobs:
           # Unzip the outer wrapper
           unzip -q sdk_download.zip -d sdk_tmp
 
-          # Adobe (SDK 25.x+) packages the real SDK as:
-          #   outer.zip -> *.tar.zstd.zip -> *.tar.zstd -> (tar) -> SDK folder
-          INNER_ZIP=$(find sdk_tmp -maxdepth 3 -name '*.tar.zstd.zip' | head -n1)
-          if [ -n "$INNER_ZIP" ]; then
-            echo "Detected Adobe zstd-packaged SDK: $INNER_ZIP"
-            unzip -q "$INNER_ZIP" -d sdk_mid
-            TAR_ZSTD=$(find sdk_mid -name '*.tar.zstd' | head -n1)
-            if [ -z "$TAR_ZSTD" ]; then
-              echo "::error::Expected .tar.zstd inside $INNER_ZIP but none found."; exit 1
-            fi
-            # Prefer the bundled zstd binary; fall back to brew
-            ZSTD_BIN=$(find sdk_tmp -maxdepth 3 -name 'zstd' -type f | head -n1)
+          # Adobe SDK 25.x+: the real archive is named *.tar.zstd.zip but
+          # is actually a raw .tar.zstd (the .zip suffix is cosmetic).
+          # Exclude __MACOSX metadata entries (prefixed with ._).
+          INNER=$(find sdk_tmp -not -path '*/__MACOSX/*' -name '*.tar.zstd.zip' | head -n1)
+          if [ -n "$INNER" ]; then
+            echo "Found zstd SDK archive: $INNER"
+            # Prefer bundled zstd binary; fall back to system zstd or brew
+            ZSTD_BIN=$(find sdk_tmp -not -path '*/__MACOSX/*' -name 'zstd' -type f | head -n1)
             if [ -n "$ZSTD_BIN" ]; then
               chmod +x "$ZSTD_BIN"
             elif command -v zstd >/dev/null 2>&1; then
@@ -63,7 +59,8 @@ jobs:
               ZSTD_BIN=zstd
             fi
             mkdir -p sdk
-            "$ZSTD_BIN" -d "$TAR_ZSTD" --stdout | tar -xC sdk
+            # File is a .tar.zstd despite the .zip suffix — pipe directly into tar
+            "$ZSTD_BIN" -d "$INNER" --stdout | tar -xC sdk
           else
             # Standard layout: the outer zip IS the SDK
             mv sdk_tmp sdk
@@ -133,15 +130,13 @@ jobs:
 
           Expand-Archive -Path sdk_download.zip -DestinationPath sdk_tmp -Force
 
-          # Handle Adobe's zstd-wrapped SDK (SDK 25.x+)
-          $innerZip = Get-ChildItem -Path sdk_tmp -Recurse -Filter '*.tar.zstd.zip' | Select-Object -First 1
-          if ($innerZip) {
-            Write-Host "Detected Adobe zstd-packaged SDK: $($innerZip.FullName)"
-            Expand-Archive -Path $innerZip.FullName -DestinationPath sdk_mid -Force
-            $tarZstd = Get-ChildItem -Path sdk_mid -Recurse -Filter '*.tar.zstd' | Select-Object -First 1
-            if (-not $tarZstd) {
-              Write-Error "Expected .tar.zstd inside the SDK package but found none."; exit 1
-            }
+          # Adobe SDK 25.x+: named *.tar.zstd.zip but is actually a raw .tar.zstd.
+          # Exclude __MACOSX metadata (files starting with ._).
+          $inner = Get-ChildItem -Path sdk_tmp -Recurse -Filter '*.tar.zstd.zip' |
+            Where-Object { $_.FullName -notlike '*\__MACOSX\*' -and $_.Name -notlike '._*' } |
+            Select-Object -First 1
+          if ($inner) {
+            Write-Host "Found zstd SDK archive: $($inner.FullName)"
             # Install zstd if not present
             $zstdExe = (Get-Command zstd -ErrorAction SilentlyContinue)
             if (-not $zstdExe) {
@@ -151,7 +146,8 @@ jobs:
               $zstdExe = $zstdExe.Source
             }
             New-Item -ItemType Directory -Force -Path sdk | Out-Null
-            & $zstdExe -d $tarZstd.FullName -o sdk_raw.tar
+            # File is a .tar.zstd despite the .zip suffix — decompress then untar
+            & $zstdExe -d $inner.FullName -o sdk_raw.tar
             tar -xf sdk_raw.tar -C sdk
           } else {
             Rename-Item sdk_tmp sdk
