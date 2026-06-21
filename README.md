@@ -53,6 +53,11 @@ Copy the resulting `HalftoneTornEdges.aex` (Windows) or
 `HalftoneTornEdges.plugin` (macOS) into the After Effects *Plug-ins* folder and
 restart AE. Full instructions: **[docs/build.md](docs/build.md)**.
 
+**Don't want to build it yourself?** Let GitHub build it for you and just
+download the finished file — click-by-click guide (in Korean):
+**[docs/auto-build.md](docs/auto-build.md)**. (You upload the AE SDK once, then
+press *Actions → Build AE Plugin → Run workflow*.)
+
 > Note: the source is complete and ready to compile, but it has not been built
 > in CI because the AE SDK and After Effects are not available in the authoring
 > environment. Build locally per `docs/build.md`.

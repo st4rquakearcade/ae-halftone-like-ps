@@ -104,13 +104,14 @@ elseif(WIN32)
 	if(PIPLTOOL)
 		set(PIPL_RR "${CMAKE_CURRENT_BINARY_DIR}/HalftoneTornEdges.rr")
 		set(PIPL_RRC "${CMAKE_CURRENT_BINARY_DIR}/HalftoneTornEdgesPiPL.rrc")
+		# add_custom_command can't do shell redirection portably, so route the
+		# cl.exe /EP preprocess step through "cmd /c" to capture stdout.
 		add_custom_command(
 			OUTPUT "${PIPL_RRC}"
-			COMMAND "${CMAKE_CXX_COMPILER}" /EP /D "MSWindows=1" /D "AE_OS_WIN=1"
-				/I "${AESDK_ROOT}/Headers" /I "${AESDK_ROOT}/Resources"
-				"${CMAKE_SOURCE_DIR}/src/HalftoneTornEdgesPiPL.r" > "${PIPL_RR}"
+			COMMAND cmd /c "\"${CMAKE_CXX_COMPILER}\" /nologo /EP /DMSWindows=1 /DAE_OS_WIN=1 /I \"${AESDK_ROOT}/Headers\" /I \"${AESDK_ROOT}/Resources\" \"${CMAKE_SOURCE_DIR}/src/HalftoneTornEdgesPiPL.r\" > \"${PIPL_RR}\""
 			COMMAND "${PIPLTOOL}" "${PIPL_RR}" "${PIPL_RRC}"
 			DEPENDS "${CMAKE_SOURCE_DIR}/src/HalftoneTornEdgesPiPL.r"
+			VERBATIM
 			COMMENT "Compiling PiPL with PiPLtool")
 		target_sources(HalftoneTornEdges PRIVATE "${PIPL_RRC}")
 		target_include_directories(HalftoneTornEdges PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
