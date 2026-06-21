@@ -177,8 +177,8 @@ jobs:
       - name: Configure & build
         shell: pwsh
         run: |
-          cmake -B build -G "Visual Studio 18 2025" -A x64 -DAESDK_ROOT="${{ steps.sdk.outputs.root }}"
-          cmake --build build --config Release
+          cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DAESDK_ROOT="${{ steps.sdk.outputs.root }}"
+          cmake --build build
 
       - name: Package
         shell: pwsh

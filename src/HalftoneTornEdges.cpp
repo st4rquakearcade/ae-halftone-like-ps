@@ -310,7 +310,15 @@ SmartRender(PF_InData *in_data, PF_OutData *out_data, PF_SmartRenderExtra *extra
 	if (!err && input_worldP && output_worldP) {
 
 		PF_PixelFormat fmt = PF_PixelFormat_INVALID;
-		ERR(suites.PFWorldSuite2()->PF_GetPixelFormat(input_worldP, &fmt));
+		{
+			PFWorldSuite2 *wsP = NULL;
+			ERR(in_data->pica_basicP->AcquireSuite(
+				kPFWorldSuite, kPFWorldSuiteVersion2, (const void **)&wsP));
+			if (!err && wsP) {
+				ERR(wsP->PF_GetPixelFormat(input_worldP, &fmt));
+				in_data->pica_basicP->ReleaseSuite(kPFWorldSuite, kPFWorldSuiteVersion2);
+			}
+		}
 
 		HTE_Src s;
 		s.base     = (const char *)input_worldP->data;
