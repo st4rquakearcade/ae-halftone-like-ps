@@ -31,6 +31,11 @@ if(NOT DEFINED AESDK_ROOT)
 	endif()
 endif()
 
+# Normalise to forward slashes. On Windows the SDK path arrives with
+# backslashes (D:\a\...) which become invalid escape sequences when written
+# into a generated cmake -P script. cl.exe accepts forward slashes fine.
+file(TO_CMAKE_PATH "${AESDK_ROOT}" AESDK_ROOT)
+
 # Standard AE SDK include locations (Examples/ layout).
 set(AE_INCLUDE_DIRS
 	"${AESDK_ROOT}/Headers"
@@ -69,7 +74,11 @@ if(APPLE)
 	find_program(REZ_EXECUTABLE Rez HINTS /usr/bin /Library/Developer/CommandLineTools/usr/bin)
 	if(REZ_EXECUTABLE)
 		set(PIPL_RSRC "${CMAKE_CURRENT_BINARY_DIR}/HalftoneTornEdges.rsrc")
+		# The bundle's Contents/Resources directory may not exist yet when Rez
+		# runs, and Rez won't create it — make it first, then write the .rsrc.
 		add_custom_command(TARGET HalftoneTornEdges POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E make_directory
+				"$<TARGET_BUNDLE_DIR:HalftoneTornEdges>/Contents/Resources"
 			COMMAND ${REZ_EXECUTABLE}
 				-d AE_OS_MAC=1 -useDF
 				-i "${AESDK_ROOT}/Headers"
