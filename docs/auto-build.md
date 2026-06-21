@@ -40,13 +40,28 @@
 
 ## ④ 결과 파일 다운로드
 
-1. 방금 그 실행(run) 페이지로 들어갑니다
+빌드가 끝나면 두 곳 중 **편한 곳**에서 받으면 됩니다.
+
+### (가장 쉬움) Releases 페이지에서 받기
+빌드가 성공하면 결과 파일이 자동으로 **Releases**에 올라갑니다.
+
+1. 저장소 오른쪽의 **Releases** → **Halftone & Torn Edges — 최신 빌드** 클릭
+2. **Assets** 에서 본인 OS에 맞는 zip 다운로드:
+   - 맥: `HalftoneTornEdges-macOS.zip`
+   - 윈도우: `HalftoneTornEdges-Windows.zip`
+
+이 방법은 Actions 탭을 안 거쳐도 되고, 항상 최신 빌드가 올라가 있습니다.
+
+### (대안) Actions의 Artifacts에서 받기
+1. 방금 그 실행(run) 페이지에서 **왼쪽 위 `Summary`** 클릭
 2. 페이지 맨 아래 **Artifacts** 영역에 두 개가 있습니다:
    - `HalftoneTornEdges-macOS` ← 맥용
    - `HalftoneTornEdges-Windows` ← 윈도우용
-3. 본인 OS에 맞는 것을 클릭해 다운로드 → 압축을 풀면
-   - 맥: `HalftoneTornEdges.plugin`
-   - 윈도우: `HalftoneTornEdges.aex`
+3. 본인 OS에 맞는 것을 클릭해 다운로드
+
+압축을 풀면:
+- 맥: `HalftoneTornEdges.plugin`
+- 윈도우: `HalftoneTornEdges.aex`
 
 ## ⑤ 설치
 
@@ -58,6 +73,13 @@ cp -R ~/Downloads/HalftoneTornEdges.plugin "/Applications/Adobe After Effects 20
 # macOS 차단(격리) 해제 — 안 하면 AE에 안 뜹니다
 sudo xattr -dr com.apple.quarantine "/Applications/Adobe After Effects 2024/Plug-ins/HalftoneTornEdges.plugin"
 ```
+
+> **"Apple은 ... 악성 코드가 없음을 확인할 수 없습니다" 라고 뜨면?**
+> 악성코드라서가 아니라 **서명만 안 된** 플러그인이라 그렇습니다(직접 빌드한 플러그인은 다
+> 이렇습니다). 위 `xattr` 명령이 이 차단을 풀어줍니다. 터미널이 어렵다면:
+> **시스템 설정 → 개인정보 보호 및 보안** 으로 가서 아래로 스크롤하면
+> "HalftoneTornEdges.plugin이(가) 차단되었습니다" 옆에 **"확인 없이 허용"** 버튼이 있습니다.
+> 그걸 누른 뒤 AE를 재시작하세요.
 
 ### 윈도우
 `HalftoneTornEdges.aex` 파일을 아래 폴더에 복사:
@@ -77,7 +99,10 @@ C:\Program Files\Adobe\Adobe After Effects <버전>\Support Files\Plug-ins\
 - **빌드 로그에 컴파일 에러** → 그 에러 메시지를 저에게 붙여주시면 소스를 고쳐 다시 올리겠습니다.
   (이 플러그인은 아직 실제 AE 환경에서 검증되지 않아, 첫 빌드에서 SDK 버전 차이로 사소한
   수정이 필요할 수 있습니다.)
-- **AE에 효과가 안 보임 (맥)** → ⑤의 `xattr` 명령을 플러그인 경로에 정확히 실행했는지 확인.
+- **AE에 효과가 안 보임 (맥)** → ⑤의 `xattr` 명령을 플러그인 경로에 정확히 실행했는지, 또는
+  시스템 설정에서 "확인 없이 허용"을 눌렀는지 확인.
+- **빌드 로그에 노란색 "Node.js 20 is deprecated" 경고** → 빨간 X(실패)가 아니라 단순 안내
+  경고입니다. 빌드 성공/결과물에 아무 영향이 없으니 **무시해도 됩니다**.
 
 ### (대안) SDK를 URL로 주기
 릴리스 업로드 대신, SDK zip의 직접 다운로드 URL이 있다면 저장소

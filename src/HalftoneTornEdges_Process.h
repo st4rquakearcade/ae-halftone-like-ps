@@ -257,11 +257,15 @@ static float HTE_ScreenChannel(const HTE_Src &s, int ax, int ay,
 	else                   tone = HTE_Luma(smp);
 	tone = HTE_ShapeTone(tone, PR);
 
-	float localU = (rx - centreU) / cellSize;	// [-0.5, 0.5]
-	float localV = (ry - centreV) / cellSize;
-	float radialPhase = std::sqrt((ax - cx) * (ax - cx) + (ay - cy) * (ay - cy)) / cellSize;
-	float linePhase = ry / cellSize;
-	float aa = 0.9f / cellSize;
+	float invCell = 1.0f / cellSize;
+	float localU = (rx - centreU) * invCell;	// [-0.5, 0.5]
+	float localV = (ry - centreV) * invCell;
+	// radialPhase needs a sqrt; only the concentric-ring pattern uses it.
+	float radialPhase = 0.f;
+	if (PR.halftone_pattern == PATTERN_CIRCLE)
+		radialPhase = std::sqrt((ax - cx) * (ax - cx) + (ay - cy) * (ay - cy)) * invCell;
+	float linePhase = ry * invCell;
+	float aa = 0.9f * invCell;
 
 	return HTE_CellCoverage(tone, localU, localV, radialPhase, linePhase,
 							PR.halftone_pattern, aa);

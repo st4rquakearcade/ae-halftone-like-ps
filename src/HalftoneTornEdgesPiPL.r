@@ -12,9 +12,10 @@
 	                      | PF_OutFlag_USE_OUTPUT_EXTENT  (1<<6  = 0x00000040)
 	                      = 0x02000440
 
-	    Global_OutFlags_2 = PF_OutFlag2_SUPPORTS_SMART_RENDER (1<<10 = 0x00000400)
-	                      | PF_OutFlag2_FLOAT_COLOR_AWARE     (1<<12 = 0x00001000)
-	                      = 0x00001400
+	    Global_OutFlags_2 = PF_OutFlag2_SUPPORTS_SMART_RENDER      (1<<10 = 0x00000400)
+	                      | PF_OutFlag2_FLOAT_COLOR_AWARE          (1<<12 = 0x00001000)
+	                      | PF_OutFlag2_SUPPORTS_THREADED_RENDERING(1<<27 = 0x08000000)
+	                      = 0x08001400
 */
 
 #include "AEConfig.h"
@@ -75,7 +76,7 @@ resource 'PiPL' (16000) {
 		},
 		/* [10] */
 		AE_Effect_Global_OutFlags_2 {
-			0x00001400
+			0x08001400
 		},
 		/* [11] */
 		AE_Effect_Match_Name {

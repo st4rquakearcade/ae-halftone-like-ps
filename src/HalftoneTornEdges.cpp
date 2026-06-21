@@ -42,7 +42,8 @@ GlobalSetup(PF_InData *in_data, PF_OutData *out_data,
 						   PF_OutFlag_USE_OUTPUT_EXTENT;
 
 	out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER |
-						   PF_OutFlag2_FLOAT_COLOR_AWARE;
+						   PF_OutFlag2_FLOAT_COLOR_AWARE |
+						   PF_OutFlag2_SUPPORTS_THREADED_RENDERING;	// render tiles in parallel
 
 	return PF_Err_NONE;
 }

@@ -56,11 +56,13 @@ restart AE. Full instructions: **[docs/build.md](docs/build.md)**.
 **Don't want to build it yourself?** Let GitHub build it for you and just
 download the finished file — click-by-click guide (in Korean):
 **[docs/auto-build.md](docs/auto-build.md)**. (You upload the AE SDK once, then
-press *Actions → Build AE Plugin → Run workflow*.)
+press *Actions → Build AE Plugin → Run workflow*.) Successful builds are also
+published to the repo's **Releases** page (`latest` tag), so you can grab the
+`.plugin` / `.aex` zip directly without digging through the Actions tab.
 
-> Note: the source is complete and ready to compile, but it has not been built
-> in CI because the AE SDK and After Effects are not available in the authoring
-> environment. Build locally per `docs/build.md`.
+> Note: CI builds the macOS `.plugin` and Windows `.aex` against Adobe's AE SDK
+> 25.6 on every run. The render path has not yet been exercised inside a live
+> After Effects session, so if a control misbehaves please open an issue.
 
 ## Project layout
 
