@@ -104,14 +104,27 @@ elseif(WIN32)
 	if(PIPLTOOL)
 		set(PIPL_RR "${CMAKE_CURRENT_BINARY_DIR}/HalftoneTornEdges.rr")
 		set(PIPL_RRC "${CMAKE_CURRENT_BINARY_DIR}/HalftoneTornEdgesPiPL.rrc")
-		# add_custom_command can't do shell redirection portably, so route the
-		# cl.exe /EP preprocess step through "cmd /c" to capture stdout.
+		# Use a cmake -P helper script to run cl.exe /EP and capture stdout to a
+		# file. This avoids the nested cmd /c quoting that breaks under Ninja.
+		set(_pipl_script "${CMAKE_CURRENT_BINARY_DIR}/preprocess_pipl.cmake")
+		file(WRITE "${_pipl_script}"
+			"execute_process(\n"
+			"    COMMAND \"${CMAKE_CXX_COMPILER}\" /nologo /EP\n"
+			"            /DMSWindows=1 /DAE_OS_WIN=1\n"
+			"            /I \"${AESDK_ROOT}/Headers\"\n"
+			"            /I \"${AESDK_ROOT}/Resources\"\n"
+			"            \"${CMAKE_SOURCE_DIR}/src/HalftoneTornEdgesPiPL.r\"\n"
+			"    OUTPUT_FILE \"${PIPL_RR}\"\n"
+			"    RESULT_VARIABLE _res)\n"
+			"if(_res)\n"
+			"    message(FATAL_ERROR \"cl.exe /EP failed: \${_res}\")\n"
+			"endif()\n"
+		)
 		add_custom_command(
 			OUTPUT "${PIPL_RRC}"
-			COMMAND cmd /c "\"${CMAKE_CXX_COMPILER}\" /nologo /EP /DMSWindows=1 /DAE_OS_WIN=1 /I \"${AESDK_ROOT}/Headers\" /I \"${AESDK_ROOT}/Resources\" \"${CMAKE_SOURCE_DIR}/src/HalftoneTornEdgesPiPL.r\" > \"${PIPL_RR}\""
+			COMMAND ${CMAKE_COMMAND} -P "${_pipl_script}"
 			COMMAND "${PIPLTOOL}" "${PIPL_RR}" "${PIPL_RRC}"
 			DEPENDS "${CMAKE_SOURCE_DIR}/src/HalftoneTornEdgesPiPL.r"
-			VERBATIM
 			COMMENT "Compiling PiPL with PiPLtool")
 		target_sources(HalftoneTornEdges PRIVATE "${PIPL_RRC}")
 		target_include_directories(HalftoneTornEdges PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")

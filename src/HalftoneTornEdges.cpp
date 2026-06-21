@@ -311,7 +311,7 @@ SmartRender(PF_InData *in_data, PF_OutData *out_data, PF_SmartRenderExtra *extra
 
 		PF_PixelFormat fmt = PF_PixelFormat_INVALID;
 		{
-			PFWorldSuite2 *wsP = NULL;
+			PF_WorldSuite2 *wsP = NULL;
 			ERR(in_data->pica_basicP->AcquireSuite(
 				kPFWorldSuite, kPFWorldSuiteVersion2, (const void **)&wsP));
 			if (!err && wsP) {
