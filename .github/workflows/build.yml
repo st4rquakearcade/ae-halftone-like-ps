@@ -41,9 +41,18 @@ jobs:
       - name: Locate SDK root
         id: sdk
         run: |
-          HDR=$(find "$PWD/sdk" -type f -name AE_Effect.h -path '*/Headers/*' | head -n1)
+          echo "=== SDK zip top-level structure ==="
+          find "$PWD/sdk" -maxdepth 4 | head -60
+          HDR=$(find "$PWD/sdk" -type f -name AE_Effect.h | head -n1)
           if [ -z "$HDR" ]; then echo "::error::AE_Effect.h not found inside the SDK zip."; exit 1; fi
-          ROOT=$(dirname "$(dirname "$HDR")")
+          HDR_DIR=$(dirname "$HDR")
+          # If AE_Effect.h lives directly in a Headers/ dir, ROOT is its parent.
+          # Otherwise treat the containing dir as ROOT itself.
+          if [ "$(basename "$HDR_DIR")" = "Headers" ]; then
+            ROOT=$(dirname "$HDR_DIR")
+          else
+            ROOT="$HDR_DIR"
+          fi
           echo "Found SDK root: $ROOT"
           echo "root=$ROOT" >> "$GITHUB_OUTPUT"
 
@@ -99,10 +108,16 @@ jobs:
         id: sdk
         shell: pwsh
         run: |
-          $hdr = Get-ChildItem -Path sdk -Recurse -Filter AE_Effect.h |
-                 Where-Object { $_.FullName -match '[\\/]Headers[\\/]' } | Select-Object -First 1
+          Write-Host "=== SDK zip top-level structure ==="
+          Get-ChildItem -Path sdk -Recurse -Depth 4 | Select-Object -First 60 | ForEach-Object { $_.FullName }
+          $hdr = Get-ChildItem -Path sdk -Recurse -Filter AE_Effect.h | Select-Object -First 1
           if (-not $hdr) { Write-Error "AE_Effect.h not found inside the SDK zip."; exit 1 }
-          $root = Split-Path (Split-Path $hdr.FullName)
+          $hdrDir = Split-Path $hdr.FullName
+          if ((Split-Path $hdrDir -Leaf) -eq "Headers") {
+            $root = Split-Path $hdrDir
+          } else {
+            $root = $hdrDir
+          }
           Write-Host "Found SDK root: $root"
           "root=$root" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
