@@ -1,0 +1,16 @@
+# Build output
+build/
+out/
+*.aex
+*.plugin/
+*.o
+*.obj
+*.rsrc
+*.rr
+*.rrc
+
+# IDE / OS
+.vs/
+.idea/
+*.user
+.DS_Store

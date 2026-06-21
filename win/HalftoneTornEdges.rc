@@ -1,0 +1,15 @@
+/*
+	HalftoneTornEdges.rc
+
+	Windows resource script. It pulls in the PiPL resource that PiPLtool
+	compiled from src/HalftoneTornEdgesPiPL.r (output: HalftoneTornEdgesPiPL.rrc).
+
+	The CMake build (or the SDK's standard build step) runs:
+
+	    cl /EP /D "MSWindows=1" HalftoneTornEdgesPiPL.r > tmp.rr
+	    PiPLtool tmp.rr HalftoneTornEdgesPiPL.rrc
+
+	and places HalftoneTornEdgesPiPL.rrc next to this .rc (or on the include path).
+*/
+
+#include "HalftoneTornEdgesPiPL.rrc"
