@@ -177,7 +177,7 @@ jobs:
       - name: Configure & build
         shell: pwsh
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A x64 -DAESDK_ROOT="${{ steps.sdk.outputs.root }}"
+          cmake -B build -G "Visual Studio 18 2025" -A x64 -DAESDK_ROOT="${{ steps.sdk.outputs.root }}"
           cmake --build build --config Release
 
       - name: Package

@@ -73,12 +73,12 @@ ParamsSetup(PF_InData *in_data, PF_OutData *out_data,
 	// PS "Size" is 1..12; we expose pixels-per-cell for AE precision.
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Halftone_Size),
-						 1, 200, 1, 40, 0, 6,
+						 1, 200, 1, 40, 6,
 						 PF_Precision_TENTHS, 0, 0, HTE_HALFTONE_SIZE_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Halftone_Contrast),
-						 0, 100, 0, 100, 0, 0,
+						 0, 100, 0, 100, 0,
 						 PF_Precision_TENTHS, 0, 0, HTE_HALFTONE_CONTRAST_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
@@ -96,12 +96,12 @@ ParamsSetup(PF_InData *in_data, PF_OutData *out_data,
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Halftone_TonalDetail),
-						 0.2, 5, 0.2, 3, 0, 1,
+						 0.2, 5, 0.2, 3, 1,
 						 PF_Precision_HUNDREDTHS, 0, 0, HTE_HALFTONE_TONALDETAIL_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Halftone_Mix),
-						 0, 100, 0, 100, 0, 100,
+						 0, 100, 0, 100, 100,
 						 PF_Precision_TENTHS, 0, 0, HTE_HALFTONE_MIX_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
@@ -121,27 +121,27 @@ ParamsSetup(PF_InData *in_data, PF_OutData *out_data,
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Torn_Balance),
-						 0, 100, 0, 100, 0, 50,
+						 0, 100, 0, 100, 50,
 						 PF_Precision_TENTHS, 0, 0, HTE_TORN_BALANCE_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Torn_Smoothness),
-						 0, 100, 0, 100, 0, 50,
+						 0, 100, 0, 100, 50,
 						 PF_Precision_TENTHS, 0, 0, HTE_TORN_SMOOTHNESS_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Torn_Contrast),
-						 0, 100, 0, 100, 0, 50,
+						 0, 100, 0, 100, 50,
 						 PF_Precision_TENTHS, 0, 0, HTE_TORN_CONTRAST_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Torn_Amount),
-						 0, 200, 0, 80, 0, 20,
+						 0, 200, 0, 80, 20,
 						 PF_Precision_TENTHS, 0, 0, HTE_TORN_AMOUNT_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Torn_Seed),
-						 0, 9999, 0, 100, 0, 1,
+						 0, 9999, 0, 100, 1,
 						 PF_Precision_INTEGER, 0, 0, HTE_TORN_SEED_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
@@ -156,7 +156,7 @@ ParamsSetup(PF_InData *in_data, PF_OutData *out_data,
 	// ---- Master ----
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(GetStringPtr(StrID_Master_Detail),
-						 0, 100, 0, 100, 0, 0,
+						 0, 100, 0, 100, 0,
 						 PF_Precision_TENTHS, 0, 0, HTE_MASTER_DETAIL_DISK_ID);
 
 	AEFX_CLR_STRUCT(def);
